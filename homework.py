@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 import sys
@@ -10,7 +11,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-
+logger = logging.getLogger(__name__)
 PRACTICUM_TOKEN = os.getenv('PRACTICUM_TOKEN')
 TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
 TELEGRAM_CHAT_ID = os.getenv('CHAT_ID')
@@ -34,7 +35,7 @@ def send_message(bot, message):
     try:
         return bot.send_message(TELEGRAM_CHAT_ID, message)
     except telegram.error.TelegramError as sending_error:
-        logging.error(f'Ошибка отправки Telegram: {sending_error}')
+        logger.error(f'Ошибка отправки Telegram: {sending_error}')
 
 
 def get_api_answer(current_timestamp):
@@ -51,9 +52,12 @@ def get_api_answer(current_timestamp):
             raise HTTPStatus.Internal_server_error(
                 f'Ошибка {homework_statuses}'
             )
-        return homework_statuses.json()
+        try:
+            return homework_statuses.json()
+        except json.decoder.JSONDecodeError:
+            print("Не JSON")
     except (requests.exceptions.RequestException, ValueError) as error:
-        logging.error(f'Ошибка {error}')
+        logger.error(f'Ошибка {error}')
 
 
 def check_response(response):
@@ -83,7 +87,7 @@ def check_tokens():
     tokens = [PRACTICUM_TOKEN, TELEGRAM_TOKEN, TELEGRAM_CHAT_ID]
     for token in tokens:
         if token is None:
-            logging.critical('Токен отсутствует!')
+            logger.critical('Токен отсутствует!')
             return False
     return True
 
@@ -105,7 +109,7 @@ def main():
             time.sleep(RETRY_TIME)
         except Exception as error:
             message = f'Сбой в работе программы: {error}'
-            logging.error(message)
+            logger.error(message)
             time.sleep(RETRY_TIME)
         else:
             continue
