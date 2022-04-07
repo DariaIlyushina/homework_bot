@@ -54,8 +54,8 @@ def get_api_answer(current_timestamp):
             )
         try:
             return homework_statuses.json()
-        except json.decoder.JSONDecodeError:
-            print("Не JSON")
+        except json.decoder.JSONDecodeError as json_error:
+            logger.error(f'Не Json {json_error}')
     except (requests.exceptions.RequestException, ValueError) as error:
         logger.error(f'Ошибка {error}')
 
